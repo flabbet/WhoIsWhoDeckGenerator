@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DeckGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "E:\\Documents\\AmericanActresses\\"
+    }
+  }
+}
