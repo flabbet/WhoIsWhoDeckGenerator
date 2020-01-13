@@ -18,7 +18,7 @@ namespace DeckGenerator
             string finalJson = "[";
             for (int i = 0; i < items.Count; i++)
             {
-                finalJson += "\n {" + string.Format(CardSchema, items[i].Answer,
+                finalJson += "\n {" + string.Format(CardSchema, items[i].Answer.Replace("\"", "'"),
                     items[i].ImageFileName, items[i].Description) + "\n}" + (i == items.Count - 1 ? "" : ",");
             }
             finalJson += "\n]";

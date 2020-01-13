@@ -45,7 +45,7 @@ namespace DeckGenerator
             {
                 imageUrls.Add("https:" + data[i].ImageFileName);
             }
-            Console.WriteLine($"Downloading {imageUrls.Count} images... \n Estimated size equals {imageUrls.Count * 0.017}MB");
+            Console.WriteLine($"Downloading {imageUrls.Count} images... \n Estimated size equals {imageUrls.Count * 0.016}MB");
             DeckIO.DownloadImages(imageUrls.ToArray());
             string targetPath = args[0];
             DeckGenerator deckGenerator = new DeckGenerator(targetPath,

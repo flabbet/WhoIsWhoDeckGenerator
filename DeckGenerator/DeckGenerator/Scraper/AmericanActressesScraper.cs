@@ -18,19 +18,25 @@ namespace DeckGenerator.Scraper
         public const string NameXpath = @"//div[@class='fn']";
 
         public int Century { get; set; }
+        public string CenturySuffix { get; set; } = "th";
+
 
         public AmericanActressesScraper(int century)
         {
             Century = century;
-            Url = @$"{BaseUrl}/w/index.php?title=Category:{Century}th-century_American_actresses";
+            if (century > 20)
+            {
+                CenturySuffix = "st";
+            }
+            Url = @$"{BaseUrl}/w/index.php?title=Category:{Century}{CenturySuffix}-century_American_actresses";
         }
 
         public override async Task<string[]> GetUrlsAsync(int actressesCount)
         {
             string url = Url;
-            List<string> actressesUrls = new List<string>();
+            List<string> urls = new List<string>();
 
-            while (actressesUrls.Count < actressesCount)
+            while (urls.Count < actressesCount)
             {
                 try
                 {
@@ -39,14 +45,14 @@ namespace DeckGenerator.Scraper
                     var html = new HtmlDocument();
                     html.LoadHtml(doc);
                     HtmlNodeCollection actressesNodes = html.DocumentNode.SelectNodes(ActressXpath);
-                    actressesUrls.AddRange(GetUrlsFromNodes(actressesNodes,
-                        actressesCount - actressesUrls.Count));
-                    string[] lastActressName = GetLastTwoPartActressName(actressesUrls.ToArray(), actressesNodes);
+                    urls.AddRange(GetUrlsFromNodes(actressesNodes,
+                        actressesCount - urls.Count));
+                    string[] lastActressName = GetLastTwoPartActressName(urls.ToArray(), actressesNodes);
                     string name = lastActressName[0]; 
                     string sureName = lastActressName[1];
 
                     url = BaseUrl +
-                          $"/w/index.php?title=Category:{Century}th-century_American_actresses&pagefrom={sureName}+{name}";
+                          $"/w/index.php?title=Category:{Century}{CenturySuffix}-century_American_actresses&pagefrom={sureName}+{name}";
                 }
                 catch (NullReferenceException)
                 {
@@ -54,7 +60,7 @@ namespace DeckGenerator.Scraper
                 }
             }
 
-            return actressesUrls.ToArray();
+            return urls.ToArray();
         }
 
         private string[] GetLastTwoPartActressName(string[] actressesUrls, HtmlNodeCollection actressesNodes)
