@@ -9,37 +9,69 @@ using HtmlAgilityPack;
 
 namespace DeckGenerator.Scraper
 {
-    public class AmericanActressesScraper
+    public class AmericanActressesScraper : DataScraper
     {
         public const string BaseUrl = @"https://en.wikipedia.org";
-        public static string Url = @$"{BaseUrl}/wiki/Category:20th-century_American_actresses";
+        public string Url;
         public const string ActressXpath = @"//div[@class='mw-category-group']/ul/li/a";
-        public const string NextPageXpath = @"//div[@id='mw-pages']/a";
         public const string ImgXpath = @"//table[@class='infobox biography vcard']/tbody/tr/td/a/img";
         public const string NameXpath = @"//div[@class='fn']";
-        public static HttpClient Client = new HttpClient();
 
+        public int Century { get; set; }
 
-        public static async Task<string[]> GetActressesUrlsAsync(int actressesCount)
+        public AmericanActressesScraper(int century)
         {
-            var html = new HtmlDocument();
+            Century = century;
+            Url = @$"{BaseUrl}/w/index.php?title=Category:{Century}th-century_American_actresses";
+        }
+
+        public override async Task<string[]> GetUrlsAsync(int actressesCount)
+        {
             string url = Url;
             List<string> actressesUrls = new List<string>();
 
             while (actressesUrls.Count < actressesCount)
             {
-                var doc = await Client.GetStringAsync(url);
-                html.LoadHtml(doc);
-                url = BaseUrl +"/wiki/" + html.DocumentNode.SelectNodes(NextPageXpath).First(x => x.InnerHtml == "next page")
-                    .GetAttributeValue("href", "");
-                var actressesNodes = html.DocumentNode.SelectNodes(ActressXpath);
-                actressesUrls.AddRange(GetActressesUrlsFromNodes(actressesNodes, actressesCount - actressesUrls.Count));
+                try
+                {
+                    HttpClient client = new HttpClient();
+                    var doc = await client.GetStringAsync(url);
+                    var html = new HtmlDocument();
+                    html.LoadHtml(doc);
+                    HtmlNodeCollection actressesNodes = html.DocumentNode.SelectNodes(ActressXpath);
+                    actressesUrls.AddRange(GetUrlsFromNodes(actressesNodes,
+                        actressesCount - actressesUrls.Count));
+                    string[] lastActressName = GetLastTwoPartActressName(actressesUrls.ToArray(), actressesNodes);
+                    string name = lastActressName[0]; 
+                    string sureName = lastActressName[1];
+
+                    url = BaseUrl +
+                          $"/w/index.php?title=Category:{Century}th-century_American_actresses&pagefrom={sureName}+{name}";
+                }
+                catch (NullReferenceException)
+                {
+                    break;
+                }
             }
 
             return actressesUrls.ToArray();
         }
 
-        public static List<string> GetActressesUrlsFromNodes(HtmlNodeCollection nodes, int urlsLeft)
+        private string[] GetLastTwoPartActressName(string[] actressesUrls, HtmlNodeCollection actressesNodes)
+        {
+            string[] lastActressName = Array.Empty<string>();
+            for (int i = 0; i < actressesUrls.Length; i++)
+            {
+                if (lastActressName.Length != 2)
+                {
+                    lastActressName = actressesNodes[actressesNodes.Count - 1 - i].InnerHtml.Split(" ");
+                }
+            }
+
+            return lastActressName;
+        }
+
+        public override List<string> GetUrlsFromNodes(HtmlNodeCollection nodes, int urlsLeft)
         {
             List<string> urls = new List<string>();
             foreach (var node in nodes)
@@ -51,22 +83,27 @@ namespace DeckGenerator.Scraper
             return urls;
         }
 
-        public static async Task<List<Tuple<string, string>>> GetActressesDataAsync(string[] urls)
+        public override async Task<List<CardItem>> GetDataAsync(string[] urls)
         {
             var html = new HtmlDocument();
-            List<Tuple<string, string>> data = new List<Tuple<string, string>>();
+            List<CardItem> data = new List<CardItem>();
 
-            foreach (var url in urls)
+            for (var i = 0; i < urls.Length; i++)
             {
-                var rawDoc = await Client.GetStringAsync(url);
+                var url = urls[i];
+                HttpClient client = new HttpClient();
+                var rawDoc = await client.GetStringAsync(url);
                 html.LoadHtml(rawDoc);
                 string name = html.DocumentNode.SelectSingleNode(NameXpath)?.InnerHtml;
-                string imgUrl = html.DocumentNode.SelectSingleNode(ImgXpath)?.GetAttributeValue("src", "Image not found");
-                if(name == null || imgUrl == null) continue;
-                data.Add(new Tuple<string, string>(name, imgUrl));
+                string imgUrl = html.DocumentNode.SelectSingleNode(ImgXpath)
+                    ?.GetAttributeValue("src", "Image not found");
+                if (name == null || imgUrl == null) continue;
+                Console.WriteLine($"{i}/{urls.Length} Getting data for {name}");
+                data.Add(new CardItem(name, imgUrl, ""));
             }
 
             return data;
         }
+
     }
 }

@@ -14,9 +14,9 @@ namespace DeckGenerator
         public string TargetPath;
         public string TargetImagesPath => Path.Join(TargetPath, "images");
         public string FinalFilePath = "";
-        public List<Tuple<string, string>> CardsData;
+        public List<CardItem> CardsData;
 
-        public DeckGenerator(string targetPath, string pathToImages, List<Tuple<string,string>> cardsData)
+        public DeckGenerator(string targetPath, string pathToImages, List<CardItem> cardsData)
         {
             PathToImages = pathToImages;
             TargetPath = targetPath;
@@ -52,7 +52,7 @@ namespace DeckGenerator
             for (var i = 0; i < CardsData.Count; i++)
             {
                 var cardData = CardsData[i];
-                cardItems.Add(new CardItem(cardData.Item1, $"image{i}.jpg", ""));
+                cardItems.Add(new CardItem(cardData.Answer, $"image{i}.jpg", cardData.Description));
             }
 
             return cardItems;

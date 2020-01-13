@@ -22,6 +22,7 @@ namespace DeckGenerator.IO
             }
             for (int i = 0; i < urls.Length; i++)
             {
+                Console.WriteLine($"Downloading image {i + 1}/{urls.Length}");
                 var url = urls[i];
                 SaveImage(urls[i], Path.Join(TempImageFolder, $"image{i}.jpg"), ImageFormat.Jpeg);
             }
